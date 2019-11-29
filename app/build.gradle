@@ -1,20 +1,98 @@
 apply plugin: 'com.android.application'
 
+
+//定义apk文件名，用日期命名
+def getDate() {
+    def date = new Date()
+    def formattedDate = date.format('yyyyMMddHHmm')
+    return formattedDate
+}
+
+//定义版本号
+def verCode=1
+
 android {
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
+    //定义默认配置
     defaultConfig {
         applicationId "cn.teachcourse.myapplication"
         minSdkVersion 14
         targetSdkVersion 29
-        versionCode 1
-        versionName "1.0"
+        versionCode verCode
+        //动态定义版本名
+        versionName APP_VERSION
+        resValue("string", 'app_version', APP_VERSION)
+        //定义分包
+        multiDexEnabled true
+        //定义服务器地址
+        buildConfigField 'String', 'API_SERVER_URL', RELEASE_API_SERVER_URL
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+    //定义签名
+    signingConfigs{
+          signingConfig{
+              keyAlias 'zhaolinit'
+              keyPassword '123456'
+              storeFile file('./keystore/demo_release.jks')
+              storePassword 'dazhao?admin'
+          }
     }
     buildTypes {
         release {
-            minifyEnabled false
+            minifyEnabled true
+            zipAlignEnabled true
+            shrinkResources true
+            buildConfigField 'String', 'API_SERVER_URL', RELEASE_API_SERVER_URL
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+        debug{
+            buildConfigField 'String', 'API_SERVER_URL', DEBUG_API_SERVER_URL
+        }
+    }
+    //配置dex可选项
+    dexOptions {
+        javaMaxHeapSize "2g"
+    }
+    //https://developer.android.com/studio/build/build-variants?utm_source=android-studio#product-flavors
+    flavorDimensions "mode"
+    //打包多渠道产品
+    productFlavors {
+        commonsoon {
+            dimension "mode"
+            manifestPlaceholders = [UMENG_CHANNEL_VALUE: "commonsoon"]
+        }
+        zhushou91 {
+            dimension "mode"
+            manifestPlaceholders = [UMENG_CHANNEL_VALUE: "zhushou91"]
+        }
+    }
+
+    //定义apk名称及生成路径
+    applicationVariants.all { variant ->
+        // https://developer.android.com/studio/build/gradle-plugin-3-0-0-migration.html#variant_api
+        variant.outputs.all { output ->
+            def newName
+            def timeNow
+             //自定义输出路径
+            def outDirectory = project.rootDir.absolutePath + File.separator + "outputs"
+
+            if ("true".equals(IS_JENKINS)) {
+                timeNow = JENKINS_TIME
+                outDirectory = 'G:/Tomcat/webapps/jenkins/apk'
+                newName = 'yj-android-v' +
+                        APP_VERSION + '-' + variant.productFlavors[0].name + timeNow + '-' + variant.buildType.name + '.apk'
+            } else {
+                timeNow = getDate()
+                if (variant.buildType.name.equals('debug')) {
+                    newName = "yj-android-v${APP_VERSION}-debug.apk"
+                } else {
+                    newName = 'yj-android-v' +
+                            APP_VERSION + '-' + variant.productFlavors[0].name + timeNow + '-' + variant.buildType.name + '.apk'
+                }
+            }
+            variant.getPackageApplication().outputDirectory = new File(outDirectory)
+            outputFileName =newName
         }
     }
 }
