@@ -46,6 +46,15 @@ android {
             buildConfigField 'String', 'API_SERVER_URL', RELEASE_API_SERVER_URL
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
+
+        develop{
+            buildConfigField 'String', 'API_SERVER_URL', DEVELOP_API_SERVER_URL
+        }
+
+        product{
+            buildConfigField 'String', 'API_SERVER_URL', TEST_API_SERVER_URL
+        }
+
         debug{
             buildConfigField 'String', 'API_SERVER_URL', DEBUG_API_SERVER_URL
         }
@@ -79,7 +88,7 @@ android {
 
             if ("true".equals(IS_JENKINS)) {
                 timeNow = JENKINS_TIME
-                outDirectory = 'G:/Tomcat/webapps/jenkins/apk'
+//                outDirectory = 'G:/Tomcat/webapps/jenkins/apk'
                 newName = 'yj-android-v' +
                         APP_VERSION + '-' + variant.productFlavors[0].name + timeNow + '-' + variant.buildType.name + '.apk'
             } else {
